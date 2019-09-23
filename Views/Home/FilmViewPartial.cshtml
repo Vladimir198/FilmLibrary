@@ -1,0 +1,177 @@
+﻿@using FilmLibrary.Models.ViewModels; 
+@model FilmViewModel
+
+    
+        @Html.HiddenFor(m=>m.Id)
+        @Html.HiddenFor(m=>m.ActorsString)
+        <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLongTitle">Добавление нового фильма</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <form id="SaveFilmFormn" class="new-film-form">
+            <div class="valid-feedback">
+
+            </div>
+            <div class="form-group">
+                <label for="Name">Название фильма</label>
+                @Html.TextBoxFor(m => m.Name, new { @class = "form-control col-sm12", @required = "required" })
+                
+            </div>
+            <div class="form-group">
+                <label for="Producer">Режисер</label>
+                @Html.TextBoxFor(m => m.Producer, new { @class = "form-control col-sm12", @required = "required" })
+            </div>
+            <div class="form-group">
+                <label for="Producer">Жанр</label>
+                @Html.DropDownListFor(m => m.Ganre, Model.GeanreSelectList, new { @class = "form-control col-sm12" })
+            </div>
+            <div class="form-group">
+                <label for="Producer">Описание</label>
+                @Html.TextAreaFor(m => m.Description, new { @class = "form-control col-sm12", @rows = "3" })
+            </div>
+            <div class="form-group">
+                <label for="Producer">Актеры</label>
+                <input id="actor" type="text" class="form-control" placeholder="Введите актера и нажмите Enter" />
+                <div id="actorsList">
+                    @foreach (var item in Model.Actors)
+                    {
+                        <span class="badge badge-secondary">@item<i class="fas fa-trash-alt"></i></span>
+                    }
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="Budget">Бюджет</label>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">$ млн.</span>
+                    </div>
+                    @Html.TextBoxFor(m => m.Budget, new { @class = "form-control col-sm12", @type = "number" })
+                    <div class="input-group-append">
+                        <span class="input-group-text">.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="Score">Оценка <span id="badgeScore" class="badge badge-primary">@Model.ScoreString<i class="fas fa-star"></i></span></label>
+                @Html.TextBoxFor(m => m.Score, new { @class = "form-control custom-range col-sm12", @type = "range", @min = "0", @max = "10", @step = "0.5", @value = '5' })
+
+            </div>
+        </form>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+            <div id="save" class="btn btn-primary">Сохранить</div>
+        </div>
+    
+<script>
+
+    $('#Score').val('@Model.ScoreString');
+    $('.form-group').on('mousemove', '#Score', function () {
+        $('#badgeScore').html($('#Score').val()+'<i class="fas fa-star"></i>');
+    })
+    $('#actor').autocomplete({
+        serviceUrl: '@Html.Raw(Url.Action("GetAutorsAutoComplit"))',
+        type: 'POST',
+        minChars: 2,
+        deferRequestBy: 200,
+        onSelect: function (ui) {
+           
+            $('#actor').val('');
+            appenedActor(ui.value);
+        }
+    });
+
+    $('#Producer').autocomplete({
+            serviceUrl: '@Html.Raw(Url.Action("GetProducerAutoComplit"))',
+            type: 'POST',
+            minChars: 2,
+            deferRequestBy: 200
+    });
+
+    function appenedActor(name) {
+         var el = '<span class="badge badge-secondary">'+name+'<i class="fas fa-trash-alt"></i></span>';
+            $('#actorsList').append(el);
+        $('#ActorsString').val() == ''
+            ? $('#ActorsString').val(name)
+            : $('#ActorsString').val($('#ActorsString').val() + '; ' + name); 
+    }
+
+    function removeActor(name) {
+        $('.badge:contains(' + name + ')').remove();
+        $('#ActorsString').val($('#ActorsString').val().replace( '; ' + name, ''));
+        $('#ActorsString').val($('#ActorsString').val().replace(name, ''));
+    }
+
+    $('#actor').keypress(function (e) {
+        if (e.which == 13) {
+                var actor = $('#actor').val().trim();
+                $('#actor').val('');
+                appenedActor(actor);
+        }
+    });
+
+    $('#actor').keyup(function (e) {
+        var text = $('#actor').val();
+        var cleanText = text.replace(/[.,!?;:()\}\{\]\[]/g, '');
+        $('#actor').val(cleanText);
+    });
+
+    $('#actorsList').on('click', '.fas', function (e) {
+        var actor = this.parentNode.innerText;
+        removeActor(actor);
+    });
+
+    $('#SaveFilmFormn').validate({
+        errorClass: "is-invalid",
+        validClass: "is-valid",
+        errorContainer: ".valid-feedback",
+        errorLabelContainer: ".valid-feedback",
+        wrapper: "li",
+        showErrors: function (errorMap, errorList) {
+            this.defaultShowErrors();
+        },
+        submitHandler: function () {
+                 
+            var model = $('#SaveFilmFormn').serializeObject();
+            model.Score = $('#badgeScore').text().replace('.', ',');
+            model.ActorsString = $('#ActorsString').val();
+            model.Id = $('#Id').val();
+            $.ajax({
+                url: '@Html.Raw(Url.Action("AddUrUpdateFilm"))',
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify({ film: model }),
+                success: function (response) {
+                    table.ajax.reload();
+                        $('#filmModal').modal('hide')
+                },
+                error: function (response) {
+                        alert(response.responseText);
+                }
+            });
+        }
+    });
+    $('#save').click(function () {
+        $('#SaveFilmFormn').submit();
+    });
+
+    $.fn.serializeObject = function()
+    {
+     var o = {};
+     var a = this.serializeArray();
+     $.each(a, function() {
+         if (o[this.name] !== undefined) {
+             if (!o[this.name].push) {
+                 o[this.name] = [o[this.name]];
+             }
+             o[this.name].push(this.value || '');
+         } else {
+             o[this.name] = this.value || '';
+         }
+     });
+     return o;
+    };
+//# sourceURL=FilmViewPartial.js
+</script>    

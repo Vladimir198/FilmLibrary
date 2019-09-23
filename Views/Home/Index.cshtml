@@ -1,0 +1,210 @@
+﻿@{
+    ViewBag.Title = "Фильмы";
+}
+    <div>
+        <div class="header">
+            <h1>Список фильмов</h1>
+        </div>
+
+        <div class="menu clearfix">
+            <div class="float-right">
+                <a id="filterBtn" class="btn btn-outline-info" href="#">
+                    Фильтр
+                </a>
+            </div>
+            <div class="float-left">
+                <input id="addFilm" type="button" class="btn btn-primary" value="Добавить" />
+            </div>
+        </div>
+        
+        <div class="filter">
+            <div class="collapse bg-dark filter_container" id="collapseFilter">
+                <label for="scoreMinRange">Минимальная оценка <span id="minScore" class="badge badge-primary">0<i class="fas fa-star"></i></span></label>
+                <input type="range" class="custom-range" min="0" max="10" step="0.5" value="0" id="scoreMinRange">
+                <label for="scoreMaxRange">Максимальная оценка <span id="maxScore" class="badge badge-primary">10<i class="fas fa-star"></i></span></label>
+                <input type="range" class="custom-range" min="0" max="10" step="0.5" value="10" id="scoreMaxRange">
+            </div>
+        </div>
+        <div class="films-table">
+            <table id="filmTable" class="table table-dark col-sm-12">
+                <thead>
+                    <tr>
+                        <th scope="col">Название</th>
+                        <th scope="col">Бюджет, $.</th>
+                        <th scope="col">Жанр</th>
+                        <th scope="col">Оценка</th>
+                        <th scope="col">Режисер</th>
+                        <th scope="col">Актеры</th>
+                        <th scope="col">Управление</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <div class="modal fade" id="filmModal" tabindex="-1" role="dialog">
+            <div id="filmVindow" class="modal-dialog" role="document">
+                <div id="filmModalcontent" class="modal-content">
+                </div>
+            </div>
+        </div>
+    </div>
+
+@Scripts.Render("~/bundles/jquery")
+@Scripts.Render("~/bundles/bootstrap")
+<script type="text/javascript">
+    var table;
+    var Filter = {};
+    Filter.MinScore = 0;
+    Filter.MaxScore = 10;
+    $('#filterBtn').on('click', function () {
+        var show = $('#collapseFilter').hasClass('show');
+        if (show) {
+            $('#collapseFilter').collapse('hide');
+        }
+        else {
+            $('#collapseFilter').collapse('show');
+        }
+    });
+    $('#addFilm').on('click', function () {
+         $.ajax({
+            url: '@Html.Raw(Url.Action("AddOrUpdateFilm"))',
+            type: "GET",
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            data: {id: 0},
+            success: function (response) {
+                $('#filmModalcontent').html(response);
+                $('#filmModal').modal('show');
+            },
+             error: function (response) {
+                 alert(response.responseText);
+            }
+        });
+    });
+
+    table = $('#filmTable').DataTable({
+       
+        ajax: {
+            url: '@Html.Raw(Url.Action("GetFilmsData"))',
+            type: 'POST',
+            "data": function (d) {
+                d.Filter = Filter;
+            },
+            dataType: 'JSON'
+        },
+        select: true,
+        searching: false,
+        ordering: true,
+        serverSide: true,
+        processing: true,
+        
+    columns: [
+        {
+            data: 'Name'
+        },
+        {
+            data: 'BudgetHtml'
+        },
+        {
+            data: 'Ganre'
+        },
+        {
+            data: 'ScoreHtml'
+        },
+        {
+            data: 'Producer'
+        },
+        {
+            data: 'ActorsHtmlText'
+        },
+        {
+            data: 'MenuHtml'
+        }
+        ],
+        language: {
+            processing:     '<div class="spinner-grow text-light" style="width: 3rem; height: 3rem;" role="status">'+
+                            '<span class="sr-only">Загрузка...</span></div>',
+            search:         "Поиск по названию&nbsp;:",
+            lengthMenu:    "Показывать по _MENU_ строк",
+            emptyTable:     "Пока записей нет",
+            info: "Показано с _START_ по _END_ записи, всего _TOTAL_.", 
+            paginate: {
+                first:      "Первая",
+                previous:   "Предыдущая",
+                next:       "Следующая",
+                last:       "Последняя"
+            },
+            select: {
+                rows: {
+                        _: "Выбрано %d строк",
+                        1: "Выбрана 1 строка"
+                }
+            },
+            aria: {
+                sortAscending:  ":",
+                sortDescending: ":"
+            }
+        }
+    });
+    table.on( 'select', function ( e, dt, type, indexes ) {
+    if ( type === 'row' ) {
+        var id = table.rows( indexes ).data().pluck( 'TD_RowId' )[0];
+ 
+         $.ajax({
+            url: '@Html.Raw(Url.Action("AddOrUpdateFilm"))',
+            type: "GET",
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            dataType: "html",
+            data: {id: id},
+            success: function (response) {
+                $('#filmModalcontent').html(response);
+                $('#filmModal').modal('show');
+            },
+             error: function (response) {
+                 alert(response.responseText);
+            }
+        });
+    }
+    });
+    table.on( 'deselect', function ( e, dt, type, indexes ) {
+        if (type === 'row') {
+            table.rows(indexes).select();
+        }
+     } );
+    table.on( 'xhr', function ( e, settings, json ) {
+        console.log('Ajax event occurred. Returned data: ', json);
+    });
+
+    $('#filmTable').on('click', '.del-btn', function (event) {
+        event.stopPropagation();
+        var id = this.getAttribute('filmId');
+        $.ajax({
+            url: '@Html.Raw(Url.Action("RemoveFilm"))',
+            type: "POST",
+            cache: false,
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify({id: id}),
+            success: function (response) {
+                
+               table.ajax.reload();
+            },
+             error: function (response) {
+                 alert(response.responseText);
+            }
+        });
+    });
+
+    $('#collapseFilter').on('change', '.custom-range', function () {
+        var min = $('#scoreMinRange').val();
+        var max = $('#scoreMaxRange').val();
+        
+        $('#minScore').html(min+'<i class="fas fa-star"></i>');
+        $('#maxScore').html(max+'<i class="fas fa-star"></i>');
+        Filter.MaxScore = max.replace('.', ',');
+        Filter.MinScore = min.replace('.', ',');
+        table.ajax.reload();
+    });
+//# sourceURL=Table.js
+</script>

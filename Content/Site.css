@@ -1,0 +1,84 @@
+﻿body {
+    padding-top: 150px;
+    padding-bottom: 20px;
+}
+
+.body-content {
+    padding: 15px;
+
+}
+.background-body {
+    background-image: url('images/270362_1920x1080x500.jpg');
+    background-size: cover;
+    height: -webkit-fill-available;
+    padding: 15px;
+}
+.header{
+    color:aliceblue;
+}
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+.new-film-form{
+    padding:10px;
+}
+
+i.fa-trash-alt{
+    margin: 5px;
+}
+#actorsList{
+    padding:5px;
+}
+#actorsList span {
+    margin: 5px;
+}
+
+#actorsList span :hover {
+    cursor:pointer;
+}
+.table{
+    width: 100%!important;
+}
+.table-dark tbody tr {
+    background-color: rgb(52, 58, 64) !important;
+}
+.table-dark tbody tr:hover {
+    cursor: pointer !important;
+    background-color: rgb(128, 128, 128) !important;
+}
+.table tbody tr td:last-child {
+    vertical-align: middle !important;
+}
+.dataTables_length{
+    color:aliceblue!important;
+    margin-top:15px;
+}
+
+div.dataTables_wrapper div.dataTables_info {
+    color: aliceblue !important;
+}
+
+div.dataTables_wrapper div.dataTables_paginate {
+    color: aliceblue !important;
+}
+
+div.dataTables_wrapper div.dataTables_filter label {
+    color: aliceblue !important;
+}
+.filter {
+    margin-top:15px;
+    color: aliceblue;
+}
+.filter span{
+    font-size: 16px;
+    font-weight: 400; 
+}
+.autocomplete-suggestions {
+    background-color: #dee2e6b8 !important;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+.dataTables_paginate {
+    color: aliceblue !important;
+}
